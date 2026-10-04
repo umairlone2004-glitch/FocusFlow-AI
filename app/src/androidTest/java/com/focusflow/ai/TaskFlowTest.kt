@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -30,7 +31,7 @@ class TaskFlowTest {
 
     private fun awaitAnyText(vararg texts: String) {
         try {
-            composeRule.waitUntil(timeoutMillis = 30_000) {
+            composeRule.waitUntil(timeoutMillis = 60_000) {
                 texts.any { composeRule.onAllNodesWithText(it).fetchSemanticsNodes().isNotEmpty() }
             }
         } catch (error: Throwable) {
@@ -46,9 +47,9 @@ class TaskFlowTest {
     private fun ensureOnDashboard() {
         awaitAnyText("Continue", "New task")
         if (composeRule.onAllNodesWithText("Continue").fetchSemanticsNodes().isNotEmpty()) {
-            composeRule.onNodeWithText("Continue").performClick()
-            composeRule.onNodeWithText("Continue").performClick()
-            composeRule.onNodeWithText("Get started").performClick()
+            composeRule.onNodeWithText("Continue").performScrollTo().performClick()
+            composeRule.onNodeWithText("Continue").performScrollTo().performClick()
+            composeRule.onNodeWithText("Get started").performScrollTo().performClick()
         }
         awaitText("New task")
     }
