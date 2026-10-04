@@ -9,6 +9,15 @@ internet connection.
 
 ---
 
+## Download
+
+The debug build is attached to the [latest release](https://github.com/umairlone2004-glitch/FocusFlow-AI/releases/latest)
+as **FocusFlow-AI-debug.apk**. Install it on a device running Android 8.0 (API 26) or
+newer — you'll need to allow installing from unknown sources. It is also available as the
+`FocusFlow-debug-apk` artifact on any Actions run.
+
+---
+
 ## Highlights
 
 - **Onboarding & profile** — first-run setup for name, daily focus goal and theme, plus a
@@ -134,6 +143,8 @@ be triggered manually):
    only by a manual `workflow_dispatch` run (Actions → Run workflow), because a hosted
    emulator is slow and flaky and should not gate ordinary pushes; the build and unit-test
    job above is the required check.
+6. When a `v*` tag is pushed, a **release** job builds the APK and attaches it to the
+   matching GitHub Release, so the app is downloadable straight from the Releases page.
 
 ---
 
