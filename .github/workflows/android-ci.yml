@@ -108,7 +108,9 @@ jobs:
             set +e
             ./gradlew connectedDebugAndroidTest
             RC=$?
-            adb logcat -d -t 2000 > logcat.txt 2>&1 || true
+            echo "===== FILTERED LOGCAT DUMP ====="
+            adb logcat -d -t 4000 | grep -E "FOCUSFLOW_TREE|focusflow|FocusFlow|FATAL|AndroidRuntime" || true
+            echo "===== END LOGCAT DUMP ====="
             exit $RC
 
       - name: Upload instrumented test reports
@@ -116,7 +118,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: FocusFlow-instrumented-reports
-          path: |
-            app/build/reports/androidTests/**
-            logcat.txt
+          path: app/build/reports/androidTests/**
           if-no-files-found: warn

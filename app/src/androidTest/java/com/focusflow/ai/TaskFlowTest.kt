@@ -5,7 +5,6 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -31,14 +30,8 @@ class TaskFlowTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     private fun awaitAnyText(vararg texts: String) {
-        try {
-            composeRule.waitUntil(timeoutMillis = 60_000) {
-                texts.any { composeRule.onAllNodesWithText(it).fetchSemanticsNodes().isNotEmpty() }
-            }
-        } catch (error: Throwable) {
-            // Dump the current semantics tree to logcat so failures are diagnosable.
-            runCatching { composeRule.onRoot().printToLog("FOCUSFLOW_TREE") }
-            throw error
+        composeRule.waitUntil(timeoutMillis = 60_000) {
+            texts.any { composeRule.onAllNodesWithText(it).fetchSemanticsNodes().isNotEmpty() }
         }
     }
 
