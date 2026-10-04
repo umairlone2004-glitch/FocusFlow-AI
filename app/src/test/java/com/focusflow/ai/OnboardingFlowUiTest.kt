@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.focusflow.ai.domain.model.ThemeMode
 import com.focusflow.ai.ui.screens.OnboardingScreen
@@ -20,7 +21,7 @@ import org.robolectric.annotation.Config
  * it is fast and deterministic, unlike an emulator-backed test.
  */
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [34])
+@Config(sdk = [34], qualifiers = "w411dp-h891dp")
 class OnboardingFlowUiTest {
 
     @get:Rule
@@ -44,9 +45,9 @@ class OnboardingFlowUiTest {
             }
         }
 
-        composeRule.onNodeWithText("Continue").performClick()   // name  -> goal
-        composeRule.onNodeWithText("Continue").performClick()   // goal  -> theme
-        composeRule.onNodeWithText("Get started").performClick()
+        composeRule.onNodeWithText("Continue").performScrollTo().performClick()   // name -> goal
+        composeRule.onNodeWithText("Continue").performScrollTo().performClick()   // goal -> theme
+        composeRule.onNodeWithText("Get started").performScrollTo().performClick()
 
         assertThat(result).isNotNull()
         assertThat(result!!.second).isEqualTo(120)

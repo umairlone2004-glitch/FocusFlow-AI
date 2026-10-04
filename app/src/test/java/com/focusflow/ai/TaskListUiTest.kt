@@ -24,7 +24,7 @@ import org.robolectric.annotation.Config
  * ViewModel + Compose wiring is exercised without an emulator.
  */
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [34])
+@Config(sdk = [34], qualifiers = "w411dp-h891dp")
 class TaskListUiTest {
 
     @get:Rule
@@ -34,9 +34,11 @@ class TaskListUiTest {
     private val reminders = FakeReminderService()
 
     @Test
-    fun rendersTasksAndFiltersOnSearch() = runBlocking {
-        repository.upsert(Task(title = "Write report"))
-        repository.upsert(Task(title = "Read book"))
+    fun rendersTasksAndFiltersOnSearch() {
+        runBlocking {
+            repository.upsert(Task(title = "Write report"))
+            repository.upsert(Task(title = "Read book"))
+        }
         val viewModel = TaskListViewModel(repository, reminders)
 
         composeRule.setContent {
