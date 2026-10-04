@@ -110,8 +110,8 @@ Requirements: JDK 17 and the Android SDK (compileSdk 34).
 ## Testing
 
 - **Unit tests** (`app/src/test`) cover analytics calculations, streak logic, the focus
-  timer state machine, recurrence rules and task search/filter/sort, plus a ViewModel test
-  against an in-memory fake repository.
+  timer state machine, recurrence rules, task search/filter/sort, the app-startup
+  onboarding state machine, and a task-list ViewModel against an in-memory fake repository.
 - **Database/repository tests** run under Robolectric against an in-memory Room database to
   verify persistence, tag conversion, completion timestamps and recurring-task generation.
 - **Instrumented tests** (`app/src/androidTest`) drive the onboarding and task-creation
@@ -129,8 +129,11 @@ be triggered manually):
 3. `lintDebug`, `testDebugUnitTest` and `assembleDebug`.
 4. The debug APK is uploaded as the **FocusFlow-debug-apk** artifact, and lint/unit-test
    reports as **FocusFlow-reports**.
-5. A second job boots an Android emulator and runs `connectedDebugAndroidTest`, uploading
-   the instrumented-test reports.
+5. A second job, **Instrumented tests (manual)**, boots an Android emulator and runs
+   `connectedDebugAndroidTest`, uploading the instrumented-test reports. It is triggered
+   only by a manual `workflow_dispatch` run (Actions → Run workflow), because a hosted
+   emulator is slow and flaky and should not gate ordinary pushes; the build and unit-test
+   job above is the required check.
 
 ---
 

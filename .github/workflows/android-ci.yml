@@ -69,9 +69,14 @@ jobs:
           if-no-files-found: warn
 
   instrumented:
-    name: Instrumented tests
+    name: Instrumented tests (manual)
     runs-on: ubuntu-latest
     needs: build
+    # Emulator UI tests are run on demand via "Run workflow" (workflow_dispatch).
+    # They are intentionally not part of the push/PR gate: a GitHub-hosted
+    # emulator adds several minutes and is flaky, so the fast build + unit-test
+    # job is the required check.
+    if: github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout repository
