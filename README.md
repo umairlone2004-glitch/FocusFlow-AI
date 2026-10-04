@@ -137,6 +137,22 @@ be triggered manually):
 
 ---
 
+## Known limitations
+
+- **Emulator tests are not green in hosted CI.** The instrumented tests in
+  `app/src/androidTest` are real and runnable, but on a headless, software-rendered
+  GitHub-hosted AVD the app never left its splash screen within the test timeout, and no
+  crash or app log was produced. The same critical flows are covered on the JVM by
+  `OnboardingFlowUiTest` and `TaskListUiTest`, which run in the unit-test job and pass.
+- Reminder alarms are re-armed whenever the dashboard is opened. They are not restored by
+  a boot-completed receiver, so a device reboot clears pending reminders until next launch.
+- Project renaming is implemented in `ProjectsViewModel` but is not yet exposed in the
+  projects UI.
+- There is no calendar week view, and notes have no folder/tag organisation.
+- Error states are minimal and there has been no dedicated accessibility audit.
+
+---
+
 ## License
 
 Released for educational and personal use.
