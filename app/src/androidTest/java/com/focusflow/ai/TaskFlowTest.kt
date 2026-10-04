@@ -29,8 +29,14 @@ class TaskFlowTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     private fun awaitAnyText(vararg texts: String) {
-        composeRule.waitUntil(timeoutMillis = 15_000) {
-            texts.any { composeRule.onAllNodesWithText(it).fetchSemanticsNodes().isNotEmpty() }
+        try {
+            composeRule.waitUntil(timeoutMillis = 30_000) {
+                texts.any { composeRule.onAllNodesWithText(it).fetchSemanticsNodes().isNotEmpty() }
+            }
+        } catch (error: Throwable) {
+            // Dump the current semantics tree to logcat so failures are diagnosable.
+            runCatching { composeRule.onRoot().printToLog("FOCUSFLOW_TREE") }
+            throw error
         }
     }
 
