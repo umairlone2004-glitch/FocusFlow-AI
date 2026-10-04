@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.focusflow.ai.domain.model.Priority
 import com.focusflow.ai.domain.model.ThemeMode
 import com.focusflow.ai.domain.model.UserProfile
+import com.focusflow.ai.domain.reminder.ReminderService
 import com.focusflow.ai.domain.repository.FocusRepository
 import com.focusflow.ai.domain.repository.NoteRepository
 import com.focusflow.ai.domain.repository.ProfileRepository
@@ -24,7 +25,8 @@ class SettingsViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val focusRepository: FocusRepository,
     private val noteRepository: NoteRepository,
-    private val projectRepository: ProjectRepository
+    private val projectRepository: ProjectRepository,
+    private val reminderService: ReminderService
 ) : ViewModel() {
 
     val profile: StateFlow<UserProfile?> = profileRepository.observe()
@@ -43,7 +45,14 @@ class SettingsViewModel @Inject constructor(
 
     fun updateTheme(mode: ThemeMode) = edit { it.copy(themeMode = mode) }
 
-    fun updateNotifications(enabled: Boolean) = edit { it.copy(notificationsEnabled = enabled) }
+    fun updateNotifications(enabled: Boolean) {
+        viewModelScope.launch {
+            val current = profileRepository.get() ?: UserProfile()
+            profileRepository.save(current.copy(notificationsEnabled = enabled))
+            reminderService.refreshTaskReminders()
+            reminderService.refreshEventReminders()
+        }
+    }
 
     fun updateDailyGoal(minutes: Int) = edit { it.copy(dailyFocusGoalMinutes = minutes) }
 

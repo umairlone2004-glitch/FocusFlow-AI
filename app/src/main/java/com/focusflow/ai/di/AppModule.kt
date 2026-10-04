@@ -16,6 +16,7 @@ import com.focusflow.ai.data.repository.NoteRepositoryImpl
 import com.focusflow.ai.data.repository.ProfileRepositoryImpl
 import com.focusflow.ai.data.repository.ProjectRepositoryImpl
 import com.focusflow.ai.data.repository.TaskRepositoryImpl
+import com.focusflow.ai.domain.reminder.ReminderService
 import com.focusflow.ai.domain.repository.AnalyticsRepository
 import com.focusflow.ai.domain.repository.EventRepository
 import com.focusflow.ai.domain.repository.FocusRepository
@@ -23,6 +24,7 @@ import com.focusflow.ai.domain.repository.NoteRepository
 import com.focusflow.ai.domain.repository.ProfileRepository
 import com.focusflow.ai.domain.repository.ProjectRepository
 import com.focusflow.ai.domain.repository.TaskRepository
+import com.focusflow.ai.notifications.ReminderCoordinator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -86,4 +88,8 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAnalyticsRepository(impl: AnalyticsRepositoryImpl): AnalyticsRepository = impl
+
+    @Provides
+    @Singleton
+    fun provideReminderService(impl: ReminderCoordinator): ReminderService = impl
 }

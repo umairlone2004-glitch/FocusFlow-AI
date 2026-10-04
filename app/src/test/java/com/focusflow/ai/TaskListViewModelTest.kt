@@ -18,34 +18,52 @@ class TaskListViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val repository = FakeTaskRepository()
+    private val reminders = FakeReminderService()
+
+    private fun viewModel() = TaskListViewModel(repository, reminders)
 
     @Test
     fun searchFiltersVisibleTasks() = runTest {
         repository.upsert(Task(title = "Write report", priority = Priority.HIGH))
         repository.upsert(Task(title = "Read book", priority = Priority.LOW))
-        val viewModel = TaskListViewModel(repository)
-        val job = launch { viewModel.uiState.collect { } }
+        val vm = viewModel()
+        val job = launch { vm.uiState.collect { } }
         advanceUntilIdle()
 
-        viewModel.setText("report")
+        vm.setText("report")
         advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertThat(state.tasks.map { it.title }).containsExactly("Write report")
+        assertThat(vm.uiState.value.tasks.map { it.title }).containsExactly("Write report")
         job.cancel()
     }
 
     @Test
-    fun toggleCompleteUpdatesTaskState() = runTest {
+    fun toggleCompleteUpdatesTaskStateAndRefreshesReminders() = runTest {
         val id = repository.upsert(Task(title = "Task one"))
-        val viewModel = TaskListViewModel(repository)
-        val job = launch { viewModel.uiState.collect { } }
+        val vm = viewModel()
+        val job = launch { vm.uiState.collect { } }
         advanceUntilIdle()
 
-        viewModel.toggleComplete(id)
+        vm.toggleComplete(id)
         advanceUntilIdle()
 
-        assertThat(viewModel.uiState.value.tasks.first().isCompleted).isTrue()
+        assertThat(vm.uiState.value.tasks.first().isCompleted).isTrue()
+        assertThat(reminders.taskRefreshCount).isEqualTo(1)
+        job.cancel()
+    }
+
+    @Test
+    fun deletingTaskRefreshesReminders() = runTest {
+        val id = repository.upsert(Task(title = "Temporary"))
+        val vm = viewModel()
+        val job = launch { vm.uiState.collect { } }
+        advanceUntilIdle()
+
+        vm.delete(repository.getById(id)!!)
+        advanceUntilIdle()
+
+        assertThat(vm.uiState.value.tasks).isEmpty()
+        assertThat(reminders.taskRefreshCount).isEqualTo(1)
         job.cancel()
     }
 
@@ -53,31 +71,31 @@ class TaskListViewModelTest {
     fun hidingCompletedRemovesThemFromList() = runTest {
         repository.upsert(Task(title = "Done", isCompleted = true))
         repository.upsert(Task(title = "Open"))
-        val viewModel = TaskListViewModel(repository)
-        val job = launch { viewModel.uiState.collect { } }
+        val vm = viewModel()
+        val job = launch { vm.uiState.collect { } }
         advanceUntilIdle()
 
-        viewModel.setShowCompleted(false)
+        vm.setShowCompleted(false)
         advanceUntilIdle()
 
-        assertThat(viewModel.uiState.value.tasks.map { it.title }).containsExactly("Open")
+        assertThat(vm.uiState.value.tasks.map { it.title }).containsExactly("Open")
         job.cancel()
     }
 
     @Test
     fun clearFiltersResetsQuery() = runTest {
         repository.upsert(Task(title = "Alpha"))
-        val viewModel = TaskListViewModel(repository)
-        val job = launch { viewModel.uiState.collect { } }
+        val vm = viewModel()
+        val job = launch { vm.uiState.collect { } }
         advanceUntilIdle()
 
-        viewModel.setText("zzz")
+        vm.setText("zzz")
         advanceUntilIdle()
-        assertThat(viewModel.uiState.value.tasks).isEmpty()
+        assertThat(vm.uiState.value.tasks).isEmpty()
 
-        viewModel.clearFilters()
+        vm.clearFilters()
         advanceUntilIdle()
-        assertThat(viewModel.uiState.value.tasks).hasSize(1)
+        assertThat(vm.uiState.value.tasks).hasSize(1)
         job.cancel()
     }
 }

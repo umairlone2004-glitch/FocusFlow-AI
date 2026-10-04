@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.focusflow.ai.domain.model.Project
 import com.focusflow.ai.domain.model.ProjectProgress
 import com.focusflow.ai.domain.model.Task
+import com.focusflow.ai.domain.reminder.ReminderService
 import com.focusflow.ai.domain.repository.ProjectRepository
 import com.focusflow.ai.domain.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -61,6 +62,7 @@ data class ProjectDetailUiState(
 class ProjectDetailViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
     private val taskRepository: TaskRepository,
+    private val reminderService: ReminderService,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -81,10 +83,16 @@ class ProjectDetailViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProjectDetailUiState())
 
     fun toggleComplete(id: Long) {
-        viewModelScope.launch { taskRepository.toggleComplete(id) }
+        viewModelScope.launch {
+            taskRepository.toggleComplete(id)
+            reminderService.refreshTaskReminders()
+        }
     }
 
     fun deleteTask(task: Task) {
-        viewModelScope.launch { taskRepository.delete(task) }
+        viewModelScope.launch {
+            taskRepository.delete(task)
+            reminderService.refreshTaskReminders()
+        }
     }
 }

@@ -10,6 +10,7 @@ import com.focusflow.ai.domain.model.Priority
 import com.focusflow.ai.domain.model.Project
 import com.focusflow.ai.domain.model.RecurrenceType
 import com.focusflow.ai.domain.model.Task
+import com.focusflow.ai.domain.reminder.ReminderService
 import com.focusflow.ai.domain.repository.ProfileRepository
 import com.focusflow.ai.domain.repository.ProjectRepository
 import com.focusflow.ai.domain.repository.TaskRepository
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -35,7 +35,8 @@ data class TaskListUiState(
 
 @HiltViewModel
 class TaskListViewModel @Inject constructor(
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val reminderService: ReminderService
 ) : ViewModel() {
 
     private val query = MutableStateFlow(TaskQuery())
@@ -67,11 +68,17 @@ class TaskListViewModel @Inject constructor(
     fun clearFilters() = query.update { TaskQuery() }
 
     fun toggleComplete(id: Long) {
-        viewModelScope.launch { taskRepository.toggleComplete(id) }
+        viewModelScope.launch {
+            taskRepository.toggleComplete(id)
+            reminderService.refreshTaskReminders()
+        }
     }
 
     fun delete(task: Task) {
-        viewModelScope.launch { taskRepository.delete(task) }
+        viewModelScope.launch {
+            taskRepository.delete(task)
+            reminderService.refreshTaskReminders()
+        }
     }
 }
 
@@ -98,6 +105,7 @@ class TaskEditViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val projectRepository: ProjectRepository,
     private val profileRepository: ProfileRepository,
+    private val reminderService: ReminderService,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -109,15 +117,9 @@ class TaskEditViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val profile = profileRepository.get()
-            val projects = projectRepository.observeAll()
-            val categories = taskRepository.observeAll()
             val existing = if (taskId != 0L) taskRepository.getById(taskId) else null
             _uiState.update { state ->
-                val base = state.copy(
-                    isLoading = false,
-                    isEditing = existing != null,
-                    projects = emptyList()
-                )
+                val base = state.copy(isLoading = false, isEditing = existing != null)
                 if (existing != null) {
                     base.copy(
                         title = existing.title,
@@ -134,11 +136,20 @@ class TaskEditViewModel @Inject constructor(
                     base.copy(priority = profile?.defaultPriority ?: Priority.MEDIUM)
                 }
             }
-            launch { projects.collect { list -> _uiState.update { it.copy(projects = list) } } }
             launch {
-                categories.collect { list ->
+                projectRepository.observeAll().collect { list ->
+                    _uiState.update { it.copy(projects = list) }
+                }
+            }
+            launch {
+                taskRepository.observeAll().collect { list ->
                     _uiState.update {
-                        it.copy(availableCategories = list.map { t -> t.category }.filter { c -> c.isNotBlank() }.distinct().sorted())
+                        it.copy(
+                            availableCategories = list.map { t -> t.category }
+                                .filter { c -> c.isNotBlank() }
+                                .distinct()
+                                .sorted()
+                        )
                     }
                 }
             }
@@ -188,6 +199,7 @@ class TaskEditViewModel @Inject constructor(
                 updatedAt = now
             )
             taskRepository.upsert(task)
+            reminderService.refreshTaskReminders()
             _uiState.update { it.copy(saved = true) }
         }
     }
@@ -203,6 +215,7 @@ data class TaskDetailUiState(
 class TaskDetailViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val projectRepository: ProjectRepository,
+    private val reminderService: ReminderService,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -218,12 +231,16 @@ class TaskDetailViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TaskDetailUiState())
 
     fun toggleComplete() {
-        viewModelScope.launch { taskRepository.toggleComplete(taskId) }
+        viewModelScope.launch {
+            taskRepository.toggleComplete(taskId)
+            reminderService.refreshTaskReminders()
+        }
     }
 
     fun delete(onDeleted: () -> Unit) {
         viewModelScope.launch {
             taskRepository.deleteById(taskId)
+            reminderService.refreshTaskReminders()
             onDeleted()
         }
     }

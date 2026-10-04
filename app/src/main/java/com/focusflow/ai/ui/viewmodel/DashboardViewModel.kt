@@ -6,6 +6,7 @@ import com.focusflow.ai.domain.analytics.AnalyticsCalculator
 import com.focusflow.ai.domain.model.FocusSession
 import com.focusflow.ai.domain.model.ProjectProgress
 import com.focusflow.ai.domain.model.Task
+import com.focusflow.ai.domain.reminder.ReminderService
 import com.focusflow.ai.domain.repository.FocusRepository
 import com.focusflow.ai.domain.repository.ProfileRepository
 import com.focusflow.ai.domain.repository.ProjectRepository
@@ -38,11 +39,24 @@ class DashboardViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     focusRepository: FocusRepository,
     projectRepository: ProjectRepository,
-    profileRepository: ProfileRepository
+    profileRepository: ProfileRepository,
+    private val reminderService: ReminderService
 ) : ViewModel() {
 
+    init {
+        // Re-arm reminders on launch: alarms do not survive a reboot, so this
+        // restores any that are still in the future.
+        viewModelScope.launch {
+            reminderService.refreshTaskReminders()
+            reminderService.refreshEventReminders()
+        }
+    }
+
     fun toggleComplete(id: Long) {
-        viewModelScope.launch { taskRepository.toggleComplete(id) }
+        viewModelScope.launch {
+            taskRepository.toggleComplete(id)
+            reminderService.refreshTaskReminders()
+        }
     }
 
     val uiState: StateFlow<DashboardUiState> = combine(

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.focusflow.ai.domain.model.CalendarEvent
 import com.focusflow.ai.domain.model.Task
+import com.focusflow.ai.domain.reminder.ReminderService
 import com.focusflow.ai.domain.repository.EventRepository
 import com.focusflow.ai.domain.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,7 +31,8 @@ data class CalendarUiState(
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
-    private val eventRepository: EventRepository
+    private val eventRepository: EventRepository,
+    private val reminderService: ReminderService
 ) : ViewModel() {
 
     private val month = MutableStateFlow(YearMonth.now())
@@ -76,10 +78,14 @@ class CalendarViewModel @Inject constructor(
                     endTime = end
                 )
             )
+            reminderService.refreshEventReminders()
         }
     }
 
     fun deleteEvent(id: Long) {
-        viewModelScope.launch { eventRepository.delete(id) }
+        viewModelScope.launch {
+            eventRepository.delete(id)
+            reminderService.refreshEventReminders()
+        }
     }
 }
